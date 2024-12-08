@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Size Calculator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            line-height: 1.5;
+            background: #f8fafc;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin: 1rem 0;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+        .help-text {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            width: 100%;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        #results {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: #f0f9ff;
+            border-radius: 8px;
+            border: 1px solid #bae6fd;
+            display: none;
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .pricing-option {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .pricing-option.recommended {
+            border: 2px solid #2563eb;
+            position: relative;
+        }
+        .recommended-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2563eb;
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .offset-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0.5rem 0;
+        }
+        .system-size {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #475569;
+            margin: 1rem 0;
+        }
+        #proposalSection {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e2e8f0;
+        }
+        .proposal-question {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+        #proposalForm {
+            display: none;
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .evaluation-result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+        .evaluation-message {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        .evaluation-price {
+            font-size: 0.9rem;
+        }
+        .section-divider {
+            border-top: 2px solid #e2e8f0;
+            margin: 2rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Solar System Size Calculator</h1>
+        <form id="solarForm">
+            <div class="form-group">
+                <label for="monthlyBill">Monthly Electric Bill Amount ($)</label>
+                <input type="number" id="monthlyBill" required min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label for="ratePerKwh">Electricity Rate ($ per kWh)</label>
+                <input type="number" id="ratePerKwh" min="0" step="0.01">
+                <div class="help-text">If unknown, leave blank to use average rate of $0.09/kWh</div>
+            </div>
+            <div class="form-group">
+                <label for="zipCode">ZIP Code</label>
+                <input type="text" id="zipCode" required pattern="[0-9]{5}">
+                <div class="help-text">Used to determine average peak sun hours in your area</div>
+            </div>
+            <button type="button" onclick="calculateSystem()">Calculate System Size</button>
+        </form>
+        
+        <div id="outputArea"></div>
+
+        <div class="section-divider"></div>
+
+        <div>
+            <div class="proposal-question">Do you have proposals from other suppliers?</div>
+            <div class="form-group">
+                <select id="hasProposal" onchange="toggleProposalForm()">
+                    <option value="">Select an option</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            
+            <div id="proposalForm">
+                <h3>Proposal Details</h3>
+                <div class="form-group">
+                    <label for="systemSize">System Size Proposed</label>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+                        <input type="number" id="systemSize" min="0" step="0.01" placeholder="Enter system size">
+                        <select id="sizeUnit">
+                            <option value="kW">kW</option>
+                            <option value="MW">MW</option>
+                        </select>
+                    </div>
+                    <div class="help-text">Check your proposal document for the system size</div>
+                </div>
+                <div class="form-group">
+                    <label for="totalCost">Total System Cost (before any credits)</label>
+                    <input type="number" id="totalCost" min="0" step="0.01" placeholder="Enter total cost in dollars">
+                    <div class="help-text">Enter the total cost before any tax credits or incentives</div>
+                </div>
+                <button type="button" onclick="evaluateProposal()">Evaluate Proposal</button>
+                <div id="evaluationResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Previous JavaScript remains the same
+        const peakSunHoursByRegion = {
+            "0": 4.5, "1": 4.5,
+            "2": 5.0, "3": 5.5,
+            "4": 4.5, "5": 5.0,
+            "6": 5.5, "7": 5.5,
+            "8": 5.0,
+            "9": 5.5
+        };
+
+        function calculateSystem() {
+            const monthlyBill = parseFloat(document.getElementById('monthlyBill').value);
+            let ratePerKwh = parseFloat(document.getElementById('ratePerKwh').value);
+            const zipCode = document.getElementById('zipCode').value;
+
+            if (isNaN(ratePerKwh)) {
+                ratePerKwh = 0.09;
+            }
+
+            const monthlyUsageKwh = monthlyBill / ratePerKwh;
+            const dailyUsageKwh = monthlyUsageKwh / 30;
+            const peakSunHours = peakSunHoursByRegion[zipCode[0]] || 5.0;
+            const initialSystemSize = dailyUsageKwh / peakSunHours;
+            const fullSystemSize = initialSystemSize / 0.60;
+
+            const offsets = [25, 50, 75, 100];
+            const systemOptions = offsets.map(offset => ({
+                offset,
+                systemSize: (fullSystemSize * offset / 100).toFixed(1)
+            }));
+
+            const outputArea = document.getElementById('outputArea');
+            outputArea.innerHTML = `
+                <div id="results">
+                    <h2>Solar System Options</h2>
+                    <div class="pricing-grid">
+                        ${systemOptions.map(option => `
+                            <div class="pricing-option ${option.offset === 100 ? 'recommended' : ''}">
+                                ${option.offset === 100 ? '<div class="recommended-badge">Recommended</div>' : ''}
+                                <div class="offset-percentage">${option.offset}% Offset</div>
+                                <div class="system-size">${option.systemSize} kW</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function toggleProposalForm() {
+            const hasProposal = document.getElementById('hasProposal').value;
+            const proposalForm = document.getElementById('proposalForm');
+            proposalForm.style.display = hasProposal === 'yes' ? 'block' : 'none';
+            // Clear previous evaluation
+            document.getElementById('evaluationResult').innerHTML = '';
+        }
+
+        function evaluateProposal() {
+            const systemSize = parseFloat(document.getElementById('systemSize').value);
+            const sizeUnit = document.getElementById('sizeUnit').value;
+            const totalCost = parseFloat(document.getElementById('totalCost').value);
+            
+            // Input validation
+            if (isNaN(systemSize) || isNaN(totalCost)) {
+                const evaluationResult = document.getElementById('evaluationResult');
+                evaluationResult.className = 'evaluation-result';
+                evaluationResult.style.background = '#fef2f2';
+                evaluationResult.style.border = '1px solid #fee2e2';
+                evaluationResult.style.color = '#991b1b';
+                evaluationResult.innerHTML = `
+                    <div class="evaluation-message">
+                        Please enter both system size and total cost to evaluate
+                    </div>
+                `;
+                return;
+            }
+            
+            // Convert to watts
+            let systemWatts;
+            if (sizeUnit === 'kW') {
+                systemWatts = systemSize * 1000;
+            } else { // MW
+                systemWatts = systemSize * 1000000;
+            }
+            
+            // Calculate price per watt
+            const pricePerWatt = totalCost / systemWatts;
+            
+            const evaluationResult = document.getElementById('evaluationResult');
+            evaluationResult.className = 'evaluation-result';
+            
+            if (pricePerWatt > 2.15) {
+                evaluationResult.style.background = '#fee2e2';
+                evaluationResult.style.border = '1px solid #fecaca';
+                evaluationResult.style.color = '#991b1b';
+                evaluationResult.innerHTML = `
+                    <div class="evaluation-message">
+                        System price is higher than average, contact us to get better price
+                    </div>
+                    <div class="evaluation-price">
+                        Current price: $${pricePerWatt.toFixed(2)}/watt
+                    </div>
+                `;
+            } else {
+                evaluationResult.style.background = '#dcfce7';
+                evaluationResult.style.border = '1px solid #bbf7d0';
+                evaluationResult.style.color = '#166534';
+                evaluationResult.innerHTML = `
+                    <div class="evaluation-message">
+                        You have a great price for the system size proposed
+                    </div>
+                    <div class="evaluation-price">
+                        Current price: $${pricePerWatt.toFixed(2)}/watt
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
